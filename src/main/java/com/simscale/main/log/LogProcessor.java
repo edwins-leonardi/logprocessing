@@ -3,20 +3,25 @@ package com.simscale.main.log;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
-import com.simscale.main.model.CallEntry;
-import com.simscale.main.model.LogLinkedList;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.simscale.main.model.LogEntry;
+import com.simscale.main.model.LogTracer;
 import com.simscale.main.util.ConverterService;
 
 public class LogProcessor {
 
 	private static Logger logger = Logger.getLogger( "LogProcessor" );
 
-	private HashMap<String, LogLinkedList> entries = new HashMap<>(  );
+	private HashMap<String, LogTracer> entries = new HashMap<>(  );
+
+	private FileOutputStream outputFileStream;
 
 	public int processLogFile(String fileName) {
 		BufferedReader br;
@@ -47,30 +52,45 @@ public class LogProcessor {
 
 	private void processLine(String line){
 		String[] values =  line.split( " " );
-		CallEntry callEntry = mapFromValuesToCallEntry( values );
-		if(!entries.containsKey( callEntry.getId() ))
-			entries.put( callEntry.getId(), new LogLinkedList(callEntry.getId()) );
-		LogLinkedList logLinkedList = entries.get( callEntry.getId());
-		logLinkedList.addCall( callEntry );
-		if(logLinkedList.isRootFound()) {
-			logger.info( "Terminou " + logLinkedList.getId() );
-			logLinkedList.print();
-			entries.remove( logLinkedList.getId() );
+		LogEntry logEntry = mapFromValuesToCallEntry( values );
+		if(!entries.containsKey( logEntry.getTraceId() ))
+			entries.put( logEntry.getTraceId(), new LogTracer( logEntry.getTraceId()) );
+		LogTracer logTracer = entries.get( logEntry.getTraceId());
+		logTracer.addCall( logEntry );
+		if(logTracer.isRootFound()) {
+			print( logTracer );
+			entries.remove( logTracer.getId() );
 		}
-
 	}
 
-	private CallEntry mapFromValuesToCallEntry(String[] values){
+	public void print(LogTracer tracer) {
+		ObjectMapper mapper = new ObjectMapper(  );
+		try {
+			String jsonAsString = mapper.writeValueAsString( tracer );
+			if(outputFileStream == null)
+				outputFileStream = new FileOutputStream("/home/eddie/output.txt");
+			outputFileStream.write( jsonAsString.getBytes() );
+			outputFileStream.write( "\n".getBytes() );
+			System.out.println(jsonAsString);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		//printCallEntry( root, "" );
+	}
+
+
+	private LogEntry mapFromValuesToCallEntry(String[] values){
 		int index = 0;
-		CallEntry callEntry = new CallEntry();
-		callEntry.setStart( ConverterService.convertFromStringToTimestamp( values[index++] ) );
-		callEntry.setEnd( ConverterService.convertFromStringToTimestamp( values[index++] ) );
-		callEntry.setId( values[index++] );
-		callEntry.setService( values[index++] );
+		LogEntry logEntry = new LogEntry();
+		logEntry.setStart( ConverterService.convertFromStringToTimestamp( values[index++] ) );
+		logEntry.setEnd( ConverterService.convertFromStringToTimestamp( values[index++] ) );
+		logEntry.setTraceId( values[index++] );
+		logEntry.setService( values[index++] );
 		String span = values[index++];
 		String[] spanValues = span.split( "->" );
-		callEntry.setCaller(spanValues[0]);
-		callEntry.setCallee( spanValues[1] );
-		return callEntry;
+		logEntry.setCaller(spanValues[0]);
+		logEntry.setCallee( spanValues[1] );
+		return logEntry;
 	}
 }

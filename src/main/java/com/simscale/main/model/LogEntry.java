@@ -1,16 +1,23 @@
 package com.simscale.main.model;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-public class CallEntry {
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.simscale.main.util.InstantJsonSerializer;
+
+public class LogEntry {
+	@JsonSerialize(using = InstantJsonSerializer.class)
 	private Instant start;
+	@JsonSerialize(using = InstantJsonSerializer.class)
 	private Instant end;
 	private String service;
-	private List<CallEntry> calls;
-	private String id;
+	private String traceId;
 	private String caller;
 	private String callee;
+	private Set<LogEntry> calls;
+	private boolean used;
 
 	public Instant getStart() {
 		return start;
@@ -36,20 +43,12 @@ public class CallEntry {
 		this.service = service;
 	}
 
-	public List<CallEntry> getCalls() {
-		return calls;
+	public String getTraceId() {
+		return traceId;
 	}
 
-	public void setCalls(List<CallEntry> calls) {
-		this.calls = calls;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
+	public void setTraceId(String traceId) {
+		this.traceId = traceId;
 	}
 
 	public String getCaller() {
@@ -68,12 +67,33 @@ public class CallEntry {
 		this.callee = callee;
 	}
 
+	public Set<LogEntry> getCalls() {
+		return calls;
+	}
+	public void setCalls(Set<LogEntry> calls) {
+		this.calls = calls;
+	}
+
+	public void addCallEntry(LogEntry logEntry){
+		if(calls == null)
+			calls = new HashSet<>(  );
+		calls.add( logEntry );
+	}
+
+	public boolean isUsed() {
+		return used;
+	}
+
+	public void setUsed(boolean used) {
+		this.used = used;
+	}
+
 	@Override public String toString() {
-		return "CallEntry{" +
+		return "LogEntry{" +
 				"start=" + start +
 				", end=" + end +
 				", service='" + service + '\'' +
-				", id='" + id + '\'' +
+				", traceId='" + traceId + '\'' +
 				", caller='" + caller + '\'' +
 				", callee='" + callee + '\'' +
 				'}';

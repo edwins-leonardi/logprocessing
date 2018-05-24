@@ -7,12 +7,28 @@ import com.simscale.main.log.LogProcessor;
 public class LogProcessingApp {
 	private static Logger logger = Logger.getLogger( "LogProcessingApp" );
 	public static void main(String[] args) {
-		if(args.length < 1) {
-			logger.info( "This program should be called with at least one file name argument" );
+		if(args.length > 1) {
+			logger.info( "This program should be called with zero or only one argument, the input file!" );
 			System.exit( 1 );
 		}
 		logger.info("Starting LogProcessing App >>>");
-		LogProcessor processor = new LogProcessor();
-		processor.processLogFile( args[0] );
+		processLogs( args );
 	}
+
+	private static void processLogs(String args[]){
+		if(args.length == 1)
+			processLogsFromFile( args[0] );
+		else
+			processLogsFromStandarInput();
+	}
+
+	private static void processLogsFromFile(String fileName){
+		LogProcessor processor = new LogProcessor();
+		processor.processLogFile( fileName );
+	}
+
+	private static void processLogsFromStandarInput(){
+		System.out.println("TODO");
+	}
+
 }

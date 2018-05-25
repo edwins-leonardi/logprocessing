@@ -7,8 +7,8 @@ import com.simscale.main.log.LogProcessor;
 public class LogProcessingApp {
 	private static Logger logger = Logger.getLogger( "LogProcessingApp" );
 	public static void main(String[] args) {
-		if(args.length > 1) {
-			logger.info( "This program should be called with zero or only one argument, the input file!" );
+		if(args.length != 1) {
+			logger.info( "This program should be called with one argument, the input file!" );
 			System.exit( 1 );
 		}
 		logger.info("Starting LogProcessing App >>>");

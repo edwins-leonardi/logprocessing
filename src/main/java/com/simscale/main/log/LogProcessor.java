@@ -6,10 +6,15 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.TemporalField;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.simscale.main.model.LogEntry;
 import com.simscale.main.model.LogTracer;
@@ -20,8 +25,9 @@ public class LogProcessor {
 	private static Logger logger = Logger.getLogger( "LogProcessor" );
 
 	private HashMap<String, LogTracer> entries = new HashMap<>(  );
-
+	private Set<LogTracer> finishedEntries = new LinkedHashSet<>(  );
 	private FileOutputStream outputFileStream;
+	private int rowId = 0;
 
 	public int processLogFile(String fileName) {
 		BufferedReader br;
@@ -45,8 +51,10 @@ public class LogProcessor {
 		String line;
 		try (BufferedReader br = new BufferedReader( new InputStreamReader(
 				new FileInputStream( fileName ), "UTF-8" ) )) {
-			while ((line = br.readLine()) != null)
+			while ((line = br.readLine()) != null) {
 				processLine( line );
+			}
+			flushAllRemainingEntries();
 		}
 	}
 
@@ -57,10 +65,36 @@ public class LogProcessor {
 			entries.put( logEntry.getTraceId(), new LogTracer( logEntry.getTraceId()) );
 		LogTracer logTracer = entries.get( logEntry.getTraceId());
 		logTracer.addCall( logEntry );
-		if(logTracer.isRootFound()) {
+		flushEntries(logTracer, logEntry.getStart());
+	}
+
+	private void flushEntriesOlderThanOneSecond(Instant currentLogTime) {
+		finishedEntries
+				.stream()
+				.filter( logTracer -> {
+					Duration duration = Duration.between( logTracer.getRoot().getEnd(), currentLogTime );
+					return duration.getSeconds() >= 1;
+				}).map( logTracer -> {
+					print( logTracer );
+					entries.remove( logTracer.getId() );
+					return null;
+				});
+	}
+
+	private void flushAllRemainingEntries() {
+		for (LogTracer logTracer : finishedEntries){
 			print( logTracer );
 			entries.remove( logTracer.getId() );
 		}
+	}
+
+	private void flushEntries(LogTracer logTracer, Instant currentLogTime){
+		if(logTracer.isRootFound()) {
+			finishedEntries.add( logTracer );
+		}
+		if(rowId++ % 5 == 0)
+			flushEntriesOlderThanOneSecond(currentLogTime);
+
 	}
 
 	public void print(LogTracer tracer) {
@@ -76,7 +110,6 @@ public class LogProcessor {
 			e.printStackTrace();
 		}
 
-		//printCallEntry( root, "" );
 	}
 
 

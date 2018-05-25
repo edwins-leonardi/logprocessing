@@ -102,7 +102,7 @@ public class LogProcessor {
 		try {
 			String jsonAsString = mapper.writeValueAsString( tracer );
 			if(outputFileStream == null)
-				outputFileStream = new FileOutputStream("/home/eddie/output.txt");
+				outputFileStream = new FileOutputStream("output.txt");
 			outputFileStream.write( jsonAsString.getBytes() );
 			outputFileStream.write( "\n".getBytes() );
 			System.out.println(jsonAsString);

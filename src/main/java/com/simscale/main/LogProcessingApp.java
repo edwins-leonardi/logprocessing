@@ -2,33 +2,48 @@ package com.simscale.main;
 
 import java.util.logging.Logger;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import com.simscale.main.log.LogProcessor;
 
 public class LogProcessingApp {
-	private static Logger logger = Logger.getLogger( "LogProcessingApp" );
 	public static void main(String[] args) {
-		if(args.length != 1) {
-			logger.info( "This program should be called with one argument, the input file!" );
-			System.exit( 1 );
+
+		Options options = new Options();
+
+		Option input = new Option("i", "input", true, "input file path");
+		input.setRequired(true);
+		options.addOption(input);
+
+		Option output = new Option("o", "output", true, "output file path");
+		output.setRequired(true);
+		options.addOption(output);
+
+		CommandLineParser parser = new DefaultParser();
+		HelpFormatter formatter = new HelpFormatter();
+		CommandLine cmd;
+
+		try {
+			cmd = parser.parse(options, args);
+		} catch (ParseException e) {
+			System.out.println(e.getMessage());
+			formatter.printHelp("utility-name", options);
+
+			System.exit(1);
+			return;
 		}
-		logger.info("Starting LogProcessing App >>>");
-		processLogs( args );
-	}
 
-	private static void processLogs(String args[]){
-		if(args.length == 1)
-			processLogsFromFile( args[0] );
-		else
-			processLogsFromStandarInput();
-	}
+		String inputFilePath = cmd.getOptionValue("input");
+		String outputFilePath = cmd.getOptionValue("output");
 
-	private static void processLogsFromFile(String fileName){
+		System.out.println("Starting LogProcessing App >>>");
 		LogProcessor processor = new LogProcessor();
-		processor.processLogFile( fileName );
+		processor.processLogFile( inputFilePath, outputFilePath );
 	}
-
-	private static void processLogsFromStandarInput(){
-		System.out.println("TODO");
-	}
-
 }

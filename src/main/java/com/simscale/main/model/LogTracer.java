@@ -31,7 +31,7 @@ public class LogTracer {
 		addCallerCall( logEntry.getCaller(), call );
 		addCalleeCall( logEntry.getCallee(), call );
 
-		updateCalleerFromCalleeId( logEntry.getCallee(), call );
+		updateCallerFromCalleeId( logEntry.getCallee(), call );
 		updateCalleeFromCallerId( logEntry.getCaller(), call );
 
 		if (logEntry.getCaller().equals( "null" ))
@@ -66,7 +66,7 @@ public class LogTracer {
 		return root;
 	}
 
-	private void updateCalleerFromCalleeId(String calleeId, Call caller) {
+	private void updateCallerFromCalleeId(String calleeId, Call caller) {
 		Set<Call> callees = callerMap.get( calleeId );
 		if (callees != null) {
 			callees.forEach( c -> {

@@ -1,7 +1,9 @@
 package com.simscale.main.model;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -17,7 +19,11 @@ public class Call implements Comparable{
 	private Instant end;
 	private String service;
 	private String span;
-	private SortedSet<Call> calls = new TreeSet<>( );
+	private static final Comparator<Call> COMPARATOR = Comparator.comparing( (Call c) -> c.end )
+			.thenComparing( c->c.start )
+			.thenComparing( c->c.service )
+			.thenComparing( c->c.span );
+	private SortedSet<Call> calls = new TreeSet<>( COMPARATOR );
 
 	public Call(String service, Instant start, Instant end) {
 		this.service = service;
@@ -82,5 +88,21 @@ public class Call implements Comparable{
 		return "Call{" +
 				"service='" + service + '\'' +
 				'}';
+	}
+
+	@Override public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		Call call = (Call) o;
+		return Objects.equals( start, call.start ) &&
+				Objects.equals( end, call.end ) &&
+				Objects.equals( service, call.service ) &&
+				Objects.equals( span, call.span );
+	}
+
+	@Override public int hashCode() {
+		return Objects.hash( start, end, service, span );
 	}
 }
